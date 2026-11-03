@@ -1,0 +1,5 @@
+ Customer ID ,Name,Email,,Balance,Balance
+C-001,Acme Pty Ltd,ops@acme.test,31/01/2024,1250.00,1250.00
+C-002,Globex,,15/02/2024,0,0
+C-003,Initech,it@initech.test,03/03/2024,-42.50,-42.50
+C-002,Globex Corp,accounts@globex.test,15/02/2024,10.00,10.00

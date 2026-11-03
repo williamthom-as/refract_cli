@@ -1,0 +1,23 @@
+defmodule Refract.CLI.HelpTest do
+  use Refract.CLI.Case, async: true
+
+  @moduletag timeout: 10_000
+
+  test "--help lists this build's commands and plugins" do
+    assert %{code: 0, out: out, err: ""} = refract(["--help"])
+    assert out =~ ~r/^\s+columns\s/m
+    assert out =~ ~r/^\s+stats\s/m
+    assert out =~ "plugins: none"
+  end
+
+  test "a command's --help shows its usage and an example" do
+    assert %{code: 0, out: out, err: ""} = refract(["stats", "--help"])
+    assert out =~ "usage: refract stats [--input FILE]"
+    assert out =~ "refract stats --input customers.csv"
+  end
+
+  test "refract alone prints the help to stderr" do
+    assert %{code: 2, out: "", err: err} = refract([])
+    assert err =~ ~r/^\s+columns\s/m
+  end
+end

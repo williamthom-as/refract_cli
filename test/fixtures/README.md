@@ -1,0 +1,4 @@
+customers csv  messy header spaces blank duplicate
+header only csv  a header and no rows
+semicolons csv  semicolon separated
+ties csv  a tie for most common and an all blank column
