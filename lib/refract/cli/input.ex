@@ -48,6 +48,9 @@ defmodule Refract.CLI.Input do
   defp read_failed({:ok, lines}, _input), do: {:ok, lines}
   defp read_failed({:error, reason}, input), do: {:error, read_error(input, reason)}
 
+  defp locate_source(nil, {:pipe, device}),
+    do: locate_source(nil, device |> IO.read(:eof) |> piped_text())
+
   defp locate_source(nil, :terminal), do: {:error, "no input, give --input FILE or pipe one in"}
   defp locate_source(nil, ""), do: {:error, "the input is empty, no header"}
   defp locate_source(nil, text), do: {:ok, "stdin", {:string, text}, Refract.CSV}
@@ -57,6 +60,9 @@ defmodule Refract.CLI.Input do
          :ok <- check_file_readable(path),
          do: {:ok, path, path, reader}
   end
+
+  defp piped_text(:eof), do: ""
+  defp piped_text(text), do: text
 
   defp find_reader(path) do
     with {:error, {:unsupported, extension}} <- Refract.Reader.for_path(path, Plugins.readers()),

@@ -44,6 +44,22 @@ defmodule Refract.CLI.InputTest do
              %{code: 2, out: "", err: "refract: no input, give --input FILE or pipe one in\n"}
   end
 
+  test "a pipe is read when there is no --input" do
+    {:ok, pipe} = StringIO.open(File.read!(fixture("header_only.csv")))
+
+    assert %{code: 0, out: "#  column  header\n1  id      id\n2  name    name\n"} =
+             refract(["columns"], stdin: {:pipe, pipe})
+  end
+
+  test "with --input a pipe is never read" do
+    {:ok, pipe} = StringIO.open("left,unread\n")
+
+    assert %{code: 0} =
+             refract(["columns", "--input", fixture("header_only.csv")], stdin: {:pipe, pipe})
+
+    assert StringIO.contents(pipe) == {"left,unread\n", ""}
+  end
+
   test "an empty pipe" do
     assert refract(["columns"], stdin: "") ==
              %{code: 2, out: "", err: "refract: the input is empty, no header\n"}

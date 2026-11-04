@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+SELF=$(readlink -f "$0")
+exec "$(dirname "$SELF")/refract_cli" eval 'Refract.CLI.main(System.argv())' "$@"

@@ -20,13 +20,13 @@ defmodule Refract.CLI do
     help: :boolean
   ]
 
-  @type stdin :: String.t() | :terminal
+  @type stdin :: String.t() | :terminal | {:pipe, IO.device()}
 
   @type switches :: [{atom(), :boolean | :string | :integer | :keep}]
 
   @spec main([String.t()]) :: no_return()
 
-  def main(argv), do: argv |> run(stdin: read_stdin()) |> System.halt()
+  def main(argv), do: argv |> run(stdin: stdin_source()) |> System.halt()
 
   @spec run([String.t()], [{:stdin, stdin()} | {:out, IO.device()} | {:err, IO.device()}]) ::
           0 | 1 | 2
@@ -102,13 +102,10 @@ defmodule Refract.CLI do
     code
   end
 
-  defp read_stdin, do: read_stdin(stdin_terminal?())
+  defp stdin_source, do: stdin_source(stdin_terminal?())
 
-  defp read_stdin(true), do: :terminal
-  defp read_stdin(false), do: :stdio |> IO.read(:eof) |> piped_text()
-
-  defp piped_text(:eof), do: ""
-  defp piped_text(text), do: text
+  defp stdin_source(true), do: :terminal
+  defp stdin_source(false), do: {:pipe, :stdio}
 
   defp stdin_terminal?, do: :prim_tty.isatty(:stdin)
 end

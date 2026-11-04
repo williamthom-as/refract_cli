@@ -9,6 +9,7 @@ defmodule RefractCli.MixProject do
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
+      releases: [refract_cli: [include_executables_for: [:unix], steps: [:assemble]]],
       dialyzer: dialyzer()
     ]
   end
