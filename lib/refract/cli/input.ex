@@ -28,23 +28,25 @@ defmodule Refract.CLI.Input do
 
   @spec header(t()) :: {:ok, [Refract.cell()]} | {:error, String.t()}
 
-  def header(%__MODULE__{name: name, source: source, reader: reader, opts: opts}) do
-    with {:ok, lines} <- source |> reader.open(opts) |> read_failed(name),
+  def header(%__MODULE__{name: name, source: source, reader: reader, opts: opts} = input) do
+    with {:ok, lines} <- source |> reader.open(opts) |> read_failed(input),
          do: lines |> first_line() |> header_or_empty()
   rescue
     error in Refract.Errors.ParseError ->
       {:error, "cannot read #{name}: #{Exception.message(error)}"}
   end
 
+  @spec read_error(t(), term()) :: String.t()
+
+  def read_error(%__MODULE__{name: name}, reason), do: "cannot read #{name}: #{inspect(reason)}"
+
   defp first_line(lines), do: Enum.take(lines, 1)
 
   defp header_or_empty([header]), do: {:ok, header}
   defp header_or_empty([]), do: {:error, "the input is empty, no header"}
 
-  defp read_failed({:ok, lines}, _name), do: {:ok, lines}
-
-  defp read_failed({:error, reason}, name),
-    do: {:error, "cannot read #{name}: #{inspect(reason)}"}
+  defp read_failed({:ok, lines}, _input), do: {:ok, lines}
+  defp read_failed({:error, reason}, input), do: {:error, read_error(input, reason)}
 
   defp locate_source(nil, :terminal), do: {:error, "no input, give --input FILE or pipe one in"}
   defp locate_source(nil, ""), do: {:error, "the input is empty, no header"}

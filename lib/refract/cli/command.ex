@@ -2,7 +2,7 @@ defmodule Refract.CLI.Command do
   @moduledoc """
   behaviour for a `refract` command, built in or from a plugin.
 
-  `use Refract.CLI.Command` gives the defaults: no switches of its own, one input.
+  `use Refract.CLI.Command` gives the defaults: no switches of its own, one input, an answer (`kind/0` `:data` for rows).
 
   a command is stateless, `run/1` takes a context and returns a result that CLI mod
   reads, outputs and exits.
@@ -21,9 +21,11 @@ defmodule Refract.CLI.Command do
 
   @callback example() :: String.t()
 
-  @callback switches() :: OptionParser.options()
+  @callback switches() :: Refract.CLI.switches()
 
   @callback input() :: :one | :none
+
+  @callback kind() :: :answer | :data
 
   @callback run(Refract.CLI.Ctx.t()) :: result()
 
@@ -37,7 +39,10 @@ defmodule Refract.CLI.Command do
       @impl Refract.CLI.Command
       def input, do: :one
 
-      defoverridable switches: 0, input: 0
+      @impl Refract.CLI.Command
+      def kind, do: :answer
+
+      defoverridable switches: 0, input: 0, kind: 0
     end
   end
 end

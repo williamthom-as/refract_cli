@@ -36,18 +36,18 @@ defmodule Refract.CLI.Output do
   defp exit_code(%Answer{found: true}), do: 1
   defp exit_code(%Answer{found: false}), do: 0
 
-  defp write_text_to_output(text, %Ctx{output: nil}), do: IO.write(text)
+  defp write_text_to_output(text, %Ctx{output: nil, out: out}), do: IO.write(out, text)
 
   defp write_text_to_output(text, %Ctx{output: path}),
     do: path |> File.write(text) |> file_written(path)
 
-  defp write_rows_to_output(table, %Ctx{output: nil, output_opts: pairs}) do
+  defp write_rows_to_output(table, %Ctx{output: nil, out: out, output_opts: pairs}) do
     with {:ok, opts} <- writer_options(Refract.CSV, pairs) do
       table.rows
       |> Refract.CSV.encode(
         [header: table.header] ++ Keyword.put_new(opts, :escape_formulas, false)
       )
-      |> Enum.each(&IO.binwrite/1)
+      |> Enum.each(&IO.write(out, &1))
     end
   end
 

@@ -4,12 +4,22 @@ defmodule Refract.CLI.Ctx do
   alias Refract.CLI.Input
   alias Refract.CLI.Opts
 
-  @enforce_keys [:command]
+  @enforce_keys [:command, :out]
 
-  defstruct [:command, :input, :output, csv: false, table: false, output_opts: [], options: []]
+  defstruct [
+    :command,
+    :out,
+    :input,
+    :output,
+    csv: false,
+    table: false,
+    output_opts: [],
+    options: []
+  ]
 
   @type t :: %__MODULE__{
           command: module(),
+          out: IO.device(),
           input: Input.t() | nil,
           output: Path.t() | nil,
           csv: boolean(),
@@ -18,9 +28,10 @@ defmodule Refract.CLI.Ctx do
           options: keyword()
         }
 
-  @spec new(module(), keyword(), Refract.CLI.stdin()) :: {:ok, t()} | {:error, String.t()}
+  @spec new(module(), keyword(), Refract.CLI.stdin(), IO.device()) ::
+          {:ok, t()} | {:error, String.t()}
 
-  def new(command, opts, stdin) do
+  def new(command, opts, stdin, out) do
     {common, options} = Keyword.split(opts, Keyword.keys(Refract.CLI.common()))
 
     with {:ok, output_opts} <-
@@ -29,6 +40,7 @@ defmodule Refract.CLI.Ctx do
       {:ok,
        %__MODULE__{
          command: command,
+         out: out,
          input: input,
          output: Keyword.get(common, :output),
          csv: Keyword.get(common, :csv, false),

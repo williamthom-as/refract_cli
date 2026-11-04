@@ -9,6 +9,10 @@ defmodule Refract.CLI.Plugins do
     "ndjson" => "json"
   }
 
+  @spec names() :: [String.t()]
+
+  def names, do: []
+
   @spec readers() :: [module()]
 
   def readers, do: []
