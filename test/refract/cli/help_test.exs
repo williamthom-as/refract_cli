@@ -3,10 +3,15 @@ defmodule Refract.CLI.HelpTest do
 
   @moduletag timeout: 10_000
 
+  alias Refract.CLI.Commands
+
   test "--help lists this build's commands and plugins" do
     assert %{code: 0, out: out, err: ""} = refract(["--help"])
-    assert out =~ ~r/^\s+columns\s/m
-    assert out =~ ~r/^\s+stats\s/m
+
+    for command <- Commands.all() do
+      assert out =~ ~r/^\s+#{command.name()}\s/m
+    end
+
     assert out =~ "plugins: none"
   end
 
@@ -27,9 +32,9 @@ defmodule Refract.CLI.HelpTest do
     assert out =~ ~r/^\s+--col COLUMN\s/m
   end
 
-  test "--help lists the slice 2 commands" do
-    assert %{code: 0, out: out} = refract(["--help"])
-    assert out =~ ~r/^\s+duplicates\s/m
-    assert out =~ ~r/^\s+distinct\s/m
+  test "where --help shows the kinds of match" do
+    assert %{code: 0, out: out} = refract(["where", "--help"])
+    assert out =~ "usage: refract where --match MATCH..."
+    assert out =~ ~r/^\s+--match MATCH\s+COLUMN=TEXT, !=, >, >=, <, <=/m
   end
 end
