@@ -3,9 +3,9 @@ defmodule Refract.CLI.Layout do
 
   @gap "  "
 
-  @spec text(String.t() | nil, Refract.Table.t()) :: String.t()
+  @spec text(Refract.Table.t()) :: String.t()
 
-  def text(title, %Refract.Table{header: header, rows: rows}) do
+  def text(%Refract.Table{header: header, rows: rows}) do
     lines = [
       header | Enum.map(rows, fn row -> Enum.map(header, &cell_text(Map.get(row, &1))) end)
     ]
@@ -15,9 +15,7 @@ defmodule Refract.CLI.Layout do
     sides = Enum.map(columns, &align_side/1)
 
     lines
-    |> Enum.map(&layout_line(&1, widths, sides))
-    |> title_first(title)
-    |> Enum.map_join(&(&1 <> "\n"))
+    |> Enum.map_join(&(layout_line(&1, widths, sides) <> "\n"))
   end
 
   defp layout_line(cells, widths, sides) do
@@ -36,9 +34,6 @@ defmodule Refract.CLI.Layout do
   defp side(_numbers, _values), do: :left
 
   defp number?(text), do: match?({_number, ""}, Integer.parse(text))
-
-  defp title_first(lines, nil), do: lines
-  defp title_first(lines, title), do: [title | lines]
 
   defp cell_text(nil), do: ""
   defp cell_text(cell), do: to_string(cell)

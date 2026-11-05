@@ -2,9 +2,11 @@ defmodule Refract.CLI.Commands do
   @moduledoc false
 
   alias Refract.CLI.Commands.Columns
+  alias Refract.CLI.Commands.Distinct
+  alias Refract.CLI.Commands.Duplicates
   alias Refract.CLI.Commands.Stats
 
-  @commands [Columns, Stats]
+  @commands [Columns, Stats, Duplicates, Distinct]
 
   @spec all() :: [module()]
 

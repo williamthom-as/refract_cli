@@ -14,7 +14,7 @@ defmodule Refract.CLI.Output do
   end
 
   def render({:data, table}, %Ctx{table: true} = ctx) do
-    with :ok <- write_text_to_output(Layout.text(nil, table), ctx), do: {:ok, 0}
+    with :ok <- write_text_to_output(Layout.text(table), ctx), do: {:ok, 0}
   end
 
   def render({:data, table}, %Ctx{} = ctx) do
@@ -27,11 +27,24 @@ defmodule Refract.CLI.Output do
   defp write_answer(%Answer{table: table}, %Ctx{output: path} = ctx) when is_binary(path),
     do: write_rows_to_output(table, ctx)
 
-  defp write_answer(%Answer{title: title} = answer, ctx),
-    do: write_text_to_output(Layout.text(title, shown_table(answer)), ctx)
+  defp write_answer(answer, ctx), do: write_text_to_output(answer_text(answer), ctx)
 
-  defp shown_table(%Answer{shown: nil, table: table}), do: table
-  defp shown_table(%Answer{shown: shown}), do: shown
+  defp answer_text(%Answer{title: title, footer: footer} = answer) do
+    tables =
+      answer
+      |> shown_tables()
+      |> Enum.reject(&(&1.rows |> Enum.empty?()))
+      |> Enum.map_join("\n", &Layout.text/1)
+
+    text_line(title) <> tables <> text_line(footer)
+  end
+
+  defp shown_tables(%Answer{shown: nil, table: table}), do: [table]
+  defp shown_tables(%Answer{shown: shown}) when is_list(shown), do: shown
+  defp shown_tables(%Answer{shown: shown}), do: [shown]
+
+  defp text_line(nil), do: ""
+  defp text_line(text), do: text <> "\n"
 
   defp exit_code(%Answer{found: true}), do: 1
   defp exit_code(%Answer{found: false}), do: 0

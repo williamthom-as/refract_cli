@@ -2,6 +2,7 @@ defmodule Refract.CLI.Help do
   @moduledoc false
 
   alias Refract.CLI.Commands
+  alias Refract.CLI.Option
   alias Refract.CLI.Plugins
 
   @options [
@@ -47,24 +48,55 @@ defmodule Refract.CLI.Help do
   def usage(command),
     do: Enum.join(["refract #{command.name()}" | Enum.map(flags(command), &usage_flag/1)], " ")
 
-  defp flags(command), do: Keyword.take(@options, flag_names(command.kind(), command.input()))
+  @spec flag_name(atom()) :: String.t()
+
+  def flag_name(name), do: "--" <> (name |> Atom.to_string() |> String.replace("_", "-"))
+
+  defp flags(command) do
+    {required, optional} =
+      command.options()
+      |> Enum.map(&own_flag/1)
+      |> Enum.split_with(fn {_flag, _text, required, _repeat} -> required end)
+
+    required ++ optional ++ common_flags(command)
+  end
+
+  defp own_flag({name, %Option{type: type, value: value, text: text, required: required}}),
+    do: {flag_text(name, value), text, required, type == :keep}
+
+  defp flag_text(name, nil), do: flag_name(name)
+  defp flag_text(name, value), do: "#{flag_name(name)} #{value}"
+
+  defp common_flags(command) do
+    @options
+    |> Keyword.take(flag_names(command.kind(), command.input()))
+    |> Enum.map(fn {name, {flag, text}} ->
+      {flag, text, false, name in [:input_opts, :output_opts]}
+    end)
+  end
 
   defp flag_names(:answer, :one), do: [:input, :output, :csv, :input_opts, :output_opts]
   defp flag_names(:answer, :none), do: [:output, :csv, :output_opts]
   defp flag_names(:data, :one), do: [:input, :output, :table, :input_opts, :output_opts]
   defp flag_names(:data, :none), do: [:output, :table, :output_opts]
 
-  defp usage_flag({name, {flag, _text}}) when name in [:input_opts, :output_opts],
-    do: "[#{flag}]..."
+  defp usage_flag({flag, _text, true, repeat}), do: flag <> repeat_mark(repeat)
+  defp usage_flag({flag, _text, false, repeat}), do: "[#{flag}]" <> repeat_mark(repeat)
 
-  defp usage_flag({_name, {flag, _text}}), do: "[#{flag}]"
+  defp repeat_mark(true), do: "..."
+  defp repeat_mark(false), do: ""
 
   defp command_lines do
     commands = Enum.map(Commands.all(), &{&1.name(), &1.summary()})
     aligned_lines(commands)
   end
 
-  defp option_lines(command), do: command |> flags() |> Keyword.values() |> aligned_lines()
+  defp option_lines(command) do
+    command
+    |> flags()
+    |> Enum.map(fn {flag, text, _required, _repeat} -> {flag, text} end)
+    |> aligned_lines()
+  end
 
   defp aligned_lines(pairs) do
     width = pairs |> Enum.map(fn {left, _right} -> String.length(left) end) |> Enum.max()

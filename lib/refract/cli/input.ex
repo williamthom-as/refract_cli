@@ -3,6 +3,7 @@ defmodule Refract.CLI.Input do
 
   alias Refract.CLI.Opts
   alias Refract.CLI.Plugins
+  alias Refract.Table.ColumnNames
 
   @enforce_keys [:name, :source, :reader, :opts]
 
@@ -35,6 +36,21 @@ defmodule Refract.CLI.Input do
     error in Refract.Errors.ParseError ->
       {:error, "cannot read #{name}: #{Exception.message(error)}"}
   end
+
+  @spec rows(t()) :: {:ok, Enumerable.t()} | {:error, String.t()}
+
+  def rows(%__MODULE__{source: source, reader: reader, opts: opts} = input),
+    do: source |> reader.stream(opts) |> read_failed(input)
+
+  @spec check_columns(t(), [Refract.cell()], [String.t()]) :: :ok | {:error, String.t()}
+
+  def check_columns(%__MODULE__{name: name}, header, columns),
+    do: columns |> Kernel.--(ColumnNames.from(header)) |> unknown_columns(name)
+
+  defp unknown_columns([], _name), do: :ok
+
+  defp unknown_columns([column | _rest], name),
+    do: {:error, "no column #{column} in #{name}, see refract columns"}
 
   @spec read_error(t(), term()) :: String.t()
 

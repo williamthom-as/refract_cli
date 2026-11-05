@@ -8,6 +8,7 @@ defmodule Refract.CLI do
   alias Refract.CLI.Commands
   alias Refract.CLI.Ctx
   alias Refract.CLI.Help
+  alias Refract.CLI.Option
   alias Refract.CLI.Output
 
   @common [
@@ -54,7 +55,7 @@ defmodule Refract.CLI do
 
   defp parse_options({:ok, command}, _name, args, stdin, out) do
     args
-    |> OptionParser.parse(strict: @common ++ command.switches())
+    |> OptionParser.parse(strict: @common ++ own_switches(command))
     |> check_options(command, stdin, out)
   end
 
@@ -73,10 +74,27 @@ defmodule Refract.CLI do
   defp help_or_run(true, command, _opts, _stdin, _out), do: {:command_help, command}
 
   defp help_or_run(false, command, opts, stdin, out) do
-    with {:ok, ctx} <- Ctx.new(command, opts, stdin, out),
+    with :ok <- check_required(command, opts),
+         {:ok, ctx} <- Ctx.new(command, opts, stdin, out),
          {kind, _result} = result when kind in [:answer, :data] <- command.run(ctx),
          do: Output.render(result, ctx)
   end
+
+  defp own_switches(command),
+    do: Enum.map(command.options(), fn {name, %Option{type: type}} -> {name, type} end)
+
+  defp check_required(command, opts) do
+    command.options()
+    |> Enum.find(fn {name, %Option{required: required}} ->
+      required and not Keyword.has_key?(opts, name)
+    end)
+    |> required_result(command)
+  end
+
+  defp required_result(nil, _command), do: :ok
+
+  defp required_result({name, _option}, command),
+    do: {:usage, command, "#{Help.flag_name(name)} is required"}
 
   defp print_result({:ok, code}, _out, _err), do: code
 
