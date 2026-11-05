@@ -35,6 +35,7 @@ defmodule RefractCli.MixProject do
   defp deps do
     [
       {:refract, path: "../refract"},
+      {:yaml_elixir, "~> 2.12"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:ex_slop, "~> 0.4", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}

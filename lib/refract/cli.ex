@@ -25,57 +25,60 @@ defmodule Refract.CLI do
 
   @type switches :: [{atom(), :boolean | :string | :integer | :keep}]
 
+  @type run_opt ::
+          {:stdin, stdin()}
+          | {:out, IO.device()}
+          | {:err, IO.device()}
+          | {:env, %{String.t() => String.t()}}
+
   @spec main([String.t()]) :: no_return()
 
-  def main(argv), do: argv |> run(stdin: stdin_source()) |> System.halt()
+  def main(argv),
+    do: argv |> run(stdin: stdin_source(), env: System.get_env()) |> System.halt()
 
-  @spec run([String.t()], [{:stdin, stdin()} | {:out, IO.device()} | {:err, IO.device()}]) ::
-          0 | 1 | 2
+  @spec run([String.t()], [run_opt()]) :: 0 | 1 | 2
 
   def run(argv, opts) do
-    opts = Keyword.validate!(opts, [:stdin, out: :stdio, err: :stderr])
-    stdin = Keyword.fetch!(opts, :stdin)
-    out = Keyword.fetch!(opts, :out)
-    err = Keyword.fetch!(opts, :err)
+    opts = Keyword.validate!(opts, [:stdin, out: :stdio, err: :stderr, env: %{}])
 
     argv
-    |> run_command(stdin, out)
-    |> print_result(out, err)
+    |> run_command(opts)
+    |> print_result(Keyword.fetch!(opts, :out), Keyword.fetch!(opts, :err))
   end
 
   @spec common() :: switches()
 
   def common, do: @common
 
-  defp run_command([], _stdin, _out), do: {:help, :stderr}
-  defp run_command(["--help" | _args], _stdin, _out), do: {:help, :stdout}
+  defp run_command([], _opts), do: {:help, :stderr}
+  defp run_command(["--help" | _args], _opts), do: {:help, :stdout}
 
-  defp run_command([name | args], stdin, out),
-    do: name |> Commands.fetch() |> parse_options(name, args, stdin, out)
+  defp run_command([name | _rest] = argv, opts),
+    do: argv |> Commands.fetch() |> parse_options(name, opts)
 
-  defp parse_options({:ok, command}, _name, args, stdin, out) do
+  defp parse_options({:ok, command, args}, _name, opts) do
     args
     |> OptionParser.parse(strict: @common ++ own_switches(command))
-    |> check_options(command, stdin, out)
+    |> check_options(command, opts)
   end
 
-  defp parse_options(:error, name, _args, _stdin, _out),
+  defp parse_options(:error, name, _opts),
     do: {:error, "unknown command #{name}, see refract --help"}
 
-  defp check_options({_opts, _args, [{switch, _value} | _invalid]}, command, _stdin, _out),
+  defp check_options({_parsed, _args, [{switch, _value} | _invalid]}, command, _opts),
     do: {:usage, command, "unknown option #{switch}"}
 
-  defp check_options({_opts, [arg | _args], []}, command, _stdin, _out),
+  defp check_options({_parsed, [arg | _args], []}, command, _opts),
     do: {:usage, command, "unexpected argument #{arg}"}
 
-  defp check_options({opts, [], []}, command, stdin, out),
-    do: opts |> Keyword.get(:help, false) |> help_or_run(command, opts, stdin, out)
+  defp check_options({parsed, [], []}, command, opts),
+    do: parsed |> Keyword.get(:help, false) |> help_or_run(command, parsed, opts)
 
-  defp help_or_run(true, command, _opts, _stdin, _out), do: {:command_help, command}
+  defp help_or_run(true, command, _parsed, _opts), do: {:command_help, command}
 
-  defp help_or_run(false, command, opts, stdin, out) do
-    with :ok <- check_required(command, opts),
-         {:ok, ctx} <- Ctx.new(command, opts, stdin, out),
+  defp help_or_run(false, command, parsed, opts) do
+    with :ok <- check_required(command, parsed),
+         {:ok, ctx} <- Ctx.new(command, parsed, opts),
          {kind, _result} = result when kind in [:answer, :data] <- command.run(ctx) do
       Output.render(result, ctx)
     else
@@ -90,10 +93,10 @@ defmodule Refract.CLI do
   defp own_switch({name, %Option{type: :list}}), do: {name, :keep}
   defp own_switch({name, %Option{type: type}}), do: {name, type}
 
-  defp check_required(command, opts) do
+  defp check_required(command, parsed) do
     command.options()
     |> Enum.find(fn {name, %Option{required: required}} ->
-      required and not Keyword.has_key?(opts, name)
+      required and not Keyword.has_key?(parsed, name)
     end)
     |> required_result()
   end

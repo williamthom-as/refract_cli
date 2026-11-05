@@ -13,7 +13,13 @@ defmodule Refract.CLI.Case do
     {:ok, out} = StringIO.open("")
     {:ok, err} = StringIO.open("")
 
-    code = Refract.CLI.run(argv, stdin: Keyword.get(opts, :stdin, :terminal), out: out, err: err)
+    code =
+      Refract.CLI.run(argv,
+        stdin: Keyword.get(opts, :stdin, :terminal),
+        out: out,
+        err: err,
+        env: Keyword.get(opts, :env, %{})
+      )
 
     %{code: code, out: written(out), err: written(err)}
   end

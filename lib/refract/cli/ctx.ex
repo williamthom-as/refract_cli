@@ -15,7 +15,8 @@ defmodule Refract.CLI.Ctx do
     csv: false,
     table: false,
     output_opts: [],
-    options: []
+    options: [],
+    env: %{}
   ]
 
   @type t :: %__MODULE__{
@@ -26,28 +27,29 @@ defmodule Refract.CLI.Ctx do
           csv: boolean(),
           table: boolean(),
           output_opts: [Refract.CLI.Opts.pair()],
-          options: keyword()
+          options: keyword(),
+          env: %{String.t() => String.t()}
         }
 
-  @spec new(module(), keyword(), Refract.CLI.stdin(), IO.device()) ::
-          {:ok, t()} | {:error, String.t()}
+  @spec new(module(), keyword(), [Refract.CLI.run_opt()]) :: {:ok, t()} | {:error, String.t()}
 
-  def new(command, opts, stdin, out) do
-    {common, options} = Keyword.split(opts, Keyword.keys(Refract.CLI.common()))
+  def new(command, parsed, opts) do
+    {common, options} = Keyword.split(parsed, Keyword.keys(Refract.CLI.common()))
 
     with {:ok, output_opts} <-
            Opts.parse(Keyword.get_values(common, :output_opts), "--output-opts"),
-         {:ok, input} <- resolve_input(command.input(), common, stdin) do
+         {:ok, input} <- resolve_input(command.input(), common, Keyword.fetch!(opts, :stdin)) do
       {:ok,
        %__MODULE__{
          command: command,
-         out: out,
+         out: Keyword.fetch!(opts, :out),
          input: input,
          output: Keyword.get(common, :output),
          csv: Keyword.get(common, :csv, false),
          table: Keyword.get(common, :table, false),
          output_opts: output_opts,
-         options: gather_lists(options, command)
+         options: gather_lists(options, command),
+         env: Keyword.fetch!(opts, :env)
        }}
     end
   end
