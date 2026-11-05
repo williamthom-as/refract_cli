@@ -62,7 +62,7 @@ defmodule Refract.CLI.Help do
   end
 
   defp own_flag({name, %Option{type: type, value: value, text: text, required: required}}),
-    do: {flag_text(name, value), text, required, type == :keep}
+    do: {flag_text(name, value), text, required, type == :list}
 
   defp flag_text(name, nil), do: flag_name(name)
   defp flag_text(name, value), do: "#{flag_name(name)} #{value}"

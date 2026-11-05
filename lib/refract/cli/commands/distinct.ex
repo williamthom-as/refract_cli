@@ -21,7 +21,7 @@ defmodule Refract.CLI.Commands.Distinct do
   def options do
     [
       col: %Option{
-        type: :keep,
+        type: :list,
         value: "COLUMN",
         text: "a column key, repeat for a table each",
         required: true
@@ -31,7 +31,7 @@ defmodule Refract.CLI.Commands.Distinct do
 
   @impl Refract.CLI.Command
   def run(%Ctx{input: input, options: options}) do
-    columns = Keyword.get_values(options, :col)
+    columns = Keyword.fetch!(options, :col)
 
     with {:ok, header} <- Input.header(input),
          :ok <- Input.check_columns(input, header, columns),

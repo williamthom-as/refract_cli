@@ -76,25 +76,30 @@ defmodule Refract.CLI do
   defp help_or_run(false, command, opts, stdin, out) do
     with :ok <- check_required(command, opts),
          {:ok, ctx} <- Ctx.new(command, opts, stdin, out),
-         {kind, _result} = result when kind in [:answer, :data] <- command.run(ctx),
-         do: Output.render(result, ctx)
+         {kind, _result} = result when kind in [:answer, :data] <- command.run(ctx) do
+      Output.render(result, ctx)
+    else
+      {:usage, message} -> {:usage, command, message}
+      error -> error
+    end
   end
 
   defp own_switches(command),
-    do: Enum.map(command.options(), fn {name, %Option{type: type}} -> {name, type} end)
+    do: Enum.map(command.options(), &own_switch/1)
+
+  defp own_switch({name, %Option{type: :list}}), do: {name, :keep}
+  defp own_switch({name, %Option{type: type}}), do: {name, type}
 
   defp check_required(command, opts) do
     command.options()
     |> Enum.find(fn {name, %Option{required: required}} ->
       required and not Keyword.has_key?(opts, name)
     end)
-    |> required_result(command)
+    |> required_result()
   end
 
-  defp required_result(nil, _command), do: :ok
-
-  defp required_result({name, _option}, command),
-    do: {:usage, command, "#{Help.flag_name(name)} is required"}
+  defp required_result(nil), do: :ok
+  defp required_result({name, _option}), do: {:usage, "#{Help.flag_name(name)} is required"}
 
   defp print_result({:ok, code}, _out, _err), do: code
 

@@ -2,6 +2,7 @@ defmodule Refract.CLI.Ctx do
   @moduledoc false
 
   alias Refract.CLI.Input
+  alias Refract.CLI.Option
   alias Refract.CLI.Opts
 
   @enforce_keys [:command, :out]
@@ -46,10 +47,18 @@ defmodule Refract.CLI.Ctx do
          csv: Keyword.get(common, :csv, false),
          table: Keyword.get(common, :table, false),
          output_opts: output_opts,
-         options: options
+         options: gather_lists(options, command)
        }}
     end
   end
+
+  defp gather_lists(options, command),
+    do: Enum.reduce(command.options(), options, &gather_list/2)
+
+  defp gather_list({name, %Option{type: :list}}, options),
+    do: options |> Keyword.delete(name) |> Keyword.put(name, Keyword.get_values(options, name))
+
+  defp gather_list(_option, options), do: options
 
   defp resolve_input(:none, _common, _stdin), do: {:ok, nil}
 

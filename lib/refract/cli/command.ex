@@ -9,11 +9,15 @@ defmodule Refract.CLI.Command do
 
   - `{:answer, %Refract.CLI.Answer{}}` something found out, a report or with `--csv` rows
   - `{:data, %Refract.Table{}}` rows, csv by default, `--output` or `--table`
+  - `{:usage, message}` the options were wrong, shown with the command's usage
   - `{:error, message}`
   """
 
   @type result ::
-          {:answer, Refract.CLI.Answer.t()} | {:data, Refract.Table.t()} | {:error, String.t()}
+          {:answer, Refract.CLI.Answer.t()}
+          | {:data, Refract.Table.t()}
+          | {:usage, String.t()}
+          | {:error, String.t()}
 
   @callback name() :: String.t()
 

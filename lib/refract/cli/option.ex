@@ -9,7 +9,7 @@ defmodule Refract.CLI.Option do
   defstruct [:type, :value, :text, required: false]
 
   @type t :: %__MODULE__{
-          type: :boolean | :string | :integer | :keep,
+          type: :boolean | :string | :integer | :list,
           value: String.t() | nil,
           text: String.t(),
           required: boolean()

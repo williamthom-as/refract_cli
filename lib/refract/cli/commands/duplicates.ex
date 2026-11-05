@@ -22,7 +22,7 @@ defmodule Refract.CLI.Commands.Duplicates do
   def options do
     [
       col: %Option{
-        type: :keep,
+        type: :list,
         value: "COLUMN",
         text: "a column key, repeat for columns taken together",
         required: true
@@ -32,7 +32,7 @@ defmodule Refract.CLI.Commands.Duplicates do
 
   @impl Refract.CLI.Command
   def run(%Ctx{input: input, options: options}) do
-    columns = Keyword.get_values(options, :col)
+    columns = Keyword.fetch!(options, :col)
 
     with {:ok, header} <- Input.header(input),
          :ok <- Input.check_columns(input, header, columns),

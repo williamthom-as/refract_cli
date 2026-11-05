@@ -3,10 +3,13 @@ defmodule Refract.CLI.Commands do
 
   alias Refract.CLI.Commands.Columns
   alias Refract.CLI.Commands.Distinct
+  alias Refract.CLI.Commands.Drop
   alias Refract.CLI.Commands.Duplicates
+  alias Refract.CLI.Commands.Select
   alias Refract.CLI.Commands.Stats
+  alias Refract.CLI.Commands.Where
 
-  @commands [Columns, Stats, Duplicates, Distinct]
+  @commands [Columns, Stats, Duplicates, Distinct, Select, Drop, Where]
 
   @spec all() :: [module()]
 
