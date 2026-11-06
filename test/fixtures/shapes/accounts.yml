@@ -1,0 +1,17 @@
+name: accounts
+version: 1
+header:
+  columns:
+    account_no: [account no]
+    customer: [customer]
+    email: [email]
+    opened_on: [opened on]
+    amount: [amount]
+    status: [status]
+validation:
+  columns:
+    account_no: [required, unique]
+    email: [required]
+    opened_on: [{date: [dmy]}]
+    amount: [number, {min: 0}]
+    status: [required, {in: [open, closed]}]
