@@ -6,10 +6,11 @@ defmodule Refract.CLI.Commands do
   alias Refract.CLI.Commands.Drop
   alias Refract.CLI.Commands.Duplicates
   alias Refract.CLI.Commands.Select
+  alias Refract.CLI.Commands.Shapes
   alias Refract.CLI.Commands.Stats
   alias Refract.CLI.Commands.Where
 
-  @commands [Columns, Stats, Duplicates, Distinct, Select, Drop, Where]
+  @commands [Columns, Stats, Duplicates, Distinct, Select, Drop, Where, Shapes]
 
   @spec all() :: [module()]
 
