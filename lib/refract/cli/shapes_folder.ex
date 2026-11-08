@@ -33,6 +33,11 @@ defmodule Refract.CLI.ShapesFolder do
     |> Enum.map(&{&1, folder |> Path.join(&1) |> Shape.load() |> loaded()})
   end
 
+  @spec fetch(Path.t(), String.t()) :: {:ok, String.t(), Shape.t()} | {:error, String.t()}
+
+  def fetch(folder, name),
+    do: folder |> read_all() |> Enum.filter(&named?(&1, name)) |> fetched(folder, name)
+
   defp chosen_folder(nil, %{"REFRACT_SHAPES" => folder}), do: folder
   defp chosen_folder(nil, %{"HOME" => home}), do: Path.join([home, ".refract", "shapes"])
   defp chosen_folder(nil, _env), do: nil
@@ -47,6 +52,19 @@ defmodule Refract.CLI.ShapesFolder do
 
   defp folder_result(false, folder),
     do: {:error, "no shapes folder #{folder}, set REFRACT_SHAPES or give --shapes DIR"}
+
+  defp named?({_file, {:ok, %Shape{name: name}}}, name), do: true
+  defp named?(_entry, _name), do: false
+
+  defp fetched([{file, {:ok, shape}}], _folder, _name), do: {:ok, file, shape}
+
+  defp fetched([], folder, name),
+    do: {:error, "no shape #{name} in #{folder}, see refract shapes"}
+
+  defp fetched(entries, _folder, name),
+    do:
+      {:error,
+       "shape #{name} is in #{length(entries)} files: #{Enum.map_join(entries, ", ", &elem(&1, 0))}"}
 
   defp loaded({:ok, shape}), do: {:ok, shape}
   defp loaded({:error, reason}), do: {:error, Shape.describe_error(reason)}
