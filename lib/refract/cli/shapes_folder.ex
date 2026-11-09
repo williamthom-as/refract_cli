@@ -38,7 +38,7 @@ defmodule Refract.CLI.ShapesFolder do
   def fetch(folder, name),
     do: folder |> read_all() |> Enum.filter(&named?(&1, name)) |> fetched(folder, name)
 
-  defp chosen_folder(nil, %{"REFRACT_SHAPES" => folder}), do: folder
+  defp chosen_folder(nil, %{"REFRACT_SHAPES" => folder}) when folder != "", do: folder
   defp chosen_folder(nil, %{"HOME" => home}), do: Path.join([home, ".refract", "shapes"])
   defp chosen_folder(nil, _env), do: nil
   defp chosen_folder(folder, _env), do: folder
