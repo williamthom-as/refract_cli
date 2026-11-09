@@ -3,6 +3,7 @@ defmodule Refract.CLI.Input do
 
   alias Refract.CLI.Opts
   alias Refract.CLI.Plugins
+  alias Refract.Shape
   alias Refract.Table.ColumnNames
 
   @enforce_keys [:name, :source, :reader, :opts]
@@ -42,6 +43,16 @@ defmodule Refract.CLI.Input do
   def rows(%__MODULE__{source: source, reader: reader, opts: opts} = input),
     do: source |> reader.stream(opts) |> read_failed(input)
 
+  @spec validate(t(), Shape.t(), keyword()) ::
+          {:ok, Refract.Validate.Result.t()} | {:error, String.t()}
+
+  def validate(
+        %__MODULE__{source: source, reader: reader, opts: opts} = input,
+        shape,
+        validate_opts
+      ),
+      do: source |> reader.validate(shape, opts ++ validate_opts) |> validated(input, shape)
+
   @spec check_columns(t(), [Refract.cell()], [String.t()]) :: :ok | {:error, String.t()}
 
   def check_columns(%__MODULE__{name: name}, header, columns),
@@ -63,6 +74,25 @@ defmodule Refract.CLI.Input do
 
   defp read_failed({:ok, lines}, _input), do: {:ok, lines}
   defp read_failed({:error, reason}, input), do: {:error, read_error(input, reason)}
+
+  defp validated({:ok, result}, _input, _shape), do: {:ok, result}
+
+  defp validated(
+         {:error, {:header_not_found, %{matched: matched}}},
+         %__MODULE__{name: name},
+         shape
+       ),
+       do: {:error, "the #{shape.name} header is not in #{name} (#{found_text(matched, shape)})"}
+
+  defp validated({:error, reason}, input, _shape), do: {:error, read_error(input, reason)}
+
+  defp found_text([], shape),
+    do: "none of its #{map_size(shape.spec.header.columns)} columns found"
+
+  defp found_text(matched, shape),
+    do:
+      "#{length(matched)} of #{map_size(shape.spec.header.columns)} columns found: " <>
+        Enum.join(matched, ", ")
 
   defp locate_source(nil, {:pipe, device}),
     do: locate_source(nil, device |> IO.read(:eof) |> piped_text())

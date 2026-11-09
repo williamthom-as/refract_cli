@@ -38,6 +38,11 @@ defmodule Refract.CLI.ShapesTest do
 
     assert %{code: 0, out: out} = refract(["shapes"], env: %{"HOME" => dir})
     assert out =~ "accounts.yml" and not (out =~ "invoice.yml")
+
+    assert %{code: 0, out: out} =
+             refract(["shapes"], env: %{"REFRACT_SHAPES" => "", "HOME" => dir})
+
+    assert out =~ "accounts.yml"
   end
 
   test "no shapes folder" do

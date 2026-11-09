@@ -1,0 +1,5 @@
+ Account No ,Customer,Email,Opened On,,Amount,Amount,Status
+A-1001,Acme Pty Ltd,ops@acme.test,31/01/2024,note,1250.00,1250.00,open
+A-1002,Globex,accounts@globex.test,15/02/2024,,0,0,closed
+A-1003,Initech,it@initech.test,03/03/2024,,42.50,42.50,open
+A-1005,Hooli,team@hooli.test,29/02/2024,,1250.00,1250.00,open
