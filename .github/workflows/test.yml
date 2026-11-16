@@ -1,0 +1,70 @@
+name: Elixir CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test against refract_core main
+    runs-on: ubuntu-latest
+    env:
+      REFRACT_PATH: ../refract
+    defaults:
+      run:
+        working-directory: refract_cli
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        path: refract_cli
+    - name: Check out refract core beside the cli
+      uses: actions/checkout@v4
+      with:
+        repository: williamthom-as/refract_core
+        ref: main
+        path: refract
+        token: ${{ secrets.REFRACT_CHECKOUT_TOKEN }}
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        elixir-version: '1.20.2'
+        otp-version: '28.5'
+    - name: Restore dependencies cache
+      uses: actions/cache@v4
+      with:
+        path: refract_cli/deps
+        key: ${{ runner.os }}-mix-${{ hashFiles('refract_cli/mix.lock', 'refract/mix.lock') }}
+        restore-keys: ${{ runner.os }}-mix-
+    - name: Install dependencies
+      run: mix deps.get
+    - name: Compile code
+      run: mix compile --warnings-as-errors
+    - name: Check formatting
+      run: mix format --check-formatted
+    - name: Credo
+      run: mix credo --strict
+    - name: Run tests
+      run: mix test
+      env:
+        MIX_ENV: test
+    - name: Release tests
+      run: MIX_ENV=prod mix release --overwrite && mix test --only release
+
+    # dialyzer last since its slowest
+    - name: Restore PLT cache
+      uses: actions/cache@v4
+      with:
+        path: refract_cli/priv/plts
+        key: ${{ runner.os }}-plt-otp28.5-elixir1.20.2-${{ hashFiles('refract_cli/mix.lock', 'refract_cli/mix.exs', 'refract/mix.lock', 'refract/lib/**/*.ex') }}
+    - name: Build PLT
+      run: mix dialyzer --plt
+    - name: Dialyzer
+      run: mix dialyzer --force-check --format short
