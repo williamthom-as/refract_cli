@@ -31,7 +31,6 @@ jobs:
         repository: williamthom-as/refract_core
         ref: main
         path: refract
-        token: ${{ secrets.REFRACT_CHECKOUT_TOKEN }}
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
       with:
