@@ -34,7 +34,7 @@ defmodule Refract.CLI.Ctx do
   @spec new(module(), keyword(), [Refract.CLI.run_opt()]) :: {:ok, t()} | {:error, String.t()}
 
   def new(command, parsed, opts) do
-    {common, options} = Keyword.split(parsed, Keyword.keys(Refract.CLI.common()))
+    {common, options} = Keyword.split(parsed, Keyword.keys(Refract.CLI.common(command)))
 
     with {:ok, output_opts} <-
            Opts.parse(Keyword.get_values(common, :output_opts), "--output-opts"),

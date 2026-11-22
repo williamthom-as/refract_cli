@@ -8,6 +8,7 @@ defmodule Refract.CLI.Commands do
   alias Refract.CLI.Commands.Select
   alias Refract.CLI.Commands.Shapes
   alias Refract.CLI.Commands.ShapesShow
+  alias Refract.CLI.Commands.Split
   alias Refract.CLI.Commands.Stats
   alias Refract.CLI.Commands.Validate
   alias Refract.CLI.Commands.Where
@@ -20,6 +21,7 @@ defmodule Refract.CLI.Commands do
     Select,
     Drop,
     Where,
+    Split,
     Shapes,
     ShapesShow,
     Validate

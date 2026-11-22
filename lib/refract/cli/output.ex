@@ -9,8 +9,10 @@ defmodule Refract.CLI.Output do
 
   @spec render(Refract.CLI.Command.result(), Ctx.t()) :: {:ok, 0 | 1} | {:error, String.t()}
 
-  def render({:answer, %Answer{} = answer}, %Ctx{} = ctx) do
-    with :ok <- write_answer(answer, ctx), do: {:ok, exit_code(answer)}
+  def render({:answer, %Answer{writes: writes} = answer}, %Ctx{} = ctx) do
+    with :ok <- write_files(writes, ctx.output_opts),
+         :ok <- write_answer(answer, ctx),
+         do: {:ok, exit_code(answer)}
   end
 
   def render({:data, table}, %Ctx{table: true} = ctx) do
@@ -54,23 +56,38 @@ defmodule Refract.CLI.Output do
   defp write_text_to_output(text, %Ctx{output: path}),
     do: path |> File.write(text) |> file_written(path)
 
-  defp write_rows_to_output(table, %Ctx{output: nil, out: out, output_opts: pairs}) do
-    with {:ok, opts} <- writer_options(Refract.CSV, pairs) do
-      table.rows
-      |> Refract.CSV.encode(
-        [header: table.header] ++ Keyword.put_new(opts, :escape_formulas, false)
-      )
-      |> Enum.each(&IO.write(out, &1))
-    end
-  end
+  defp write_rows_to_output(table, %Ctx{output: nil, out: out}), do: write_csv(table, out)
 
   defp write_rows_to_output(table, %Ctx{output: path, output_opts: pairs}) do
-    with {:ok, writer} <- find_writer(path),
-         {:ok, opts} <- writer_options(writer, pairs) do
+    with {:ok, writer, opts} <- file_writer(path, pairs) do
       table.rows
       |> writer.write(path, [header: table.header] ++ opts)
       |> file_written(path)
     end
+  end
+
+  defp write_csv(table, out) do
+    table.rows
+    |> Refract.CSV.encode(header: table.header, escape_formulas: false)
+    |> Enum.each(&IO.write(out, &1))
+  end
+
+  defp write_files(writes, pairs), do: Enum.reduce_while(writes, :ok, &write_file(&1, &2, pairs))
+
+  defp write_file({path, header, rows}, :ok, pairs) do
+    with {:ok, writer, opts} <- file_writer(path, pairs),
+         :ok <- make_folder(path),
+         :ok <- rows |> writer.write(path, [header: header] ++ opts) |> file_written(path) do
+      {:cont, :ok}
+    else
+      error -> {:halt, error}
+    end
+  end
+
+  defp file_writer(path, pairs) do
+    with {:ok, writer} <- find_writer(path),
+         {:ok, opts} <- writer_options(writer, pairs),
+         do: {:ok, writer, opts}
   end
 
   defp find_writer(path) do
@@ -88,6 +105,17 @@ defmodule Refract.CLI.Output do
 
   defp writer_name(writer),
     do: "the #{writer |> Module.split() |> List.last() |> String.downcase()} writer"
+
+  defp make_folder(path) do
+    folder = Path.dirname(path)
+
+    folder |> File.mkdir_p() |> folder_made(folder)
+  end
+
+  defp folder_made(:ok, _folder), do: :ok
+
+  defp folder_made({:error, reason}, folder),
+    do: {:error, "cannot make #{folder}: #{:file.format_error(reason)}"}
 
   defp file_written(:ok, _path), do: :ok
 

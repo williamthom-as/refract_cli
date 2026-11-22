@@ -18,6 +18,11 @@ defmodule Refract.CLI.Layout do
     |> Enum.map_join(&(layout_line(&1, widths, sides) <> "\n"))
   end
 
+  @spec shown_value(Refract.cell()) :: Refract.cell()
+
+  def shown_value(value) when value in ["", nil], do: "(blank)"
+  def shown_value(value), do: value
+
   defp layout_line(cells, widths, sides) do
     [cells, widths, sides]
     |> Enum.zip_with(fn [cell, width, side] -> pad_cell(cell, width, side) end)

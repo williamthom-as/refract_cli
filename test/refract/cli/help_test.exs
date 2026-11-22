@@ -37,4 +37,13 @@ defmodule Refract.CLI.HelpTest do
     assert out =~ "usage: refract where --match MATCH..."
     assert out =~ ~r/^\s+--match MATCH\s+COLUMN=TEXT, !=, >, >=, <, <=/m
   end
+
+  test "split --help shows --output as required, with --csv and no --table" do
+    assert %{code: 0, out: out} = refract(["split", "--help"])
+
+    assert out =~
+             "usage: refract split --output FILE [--rows N] [--by COLUMN]... [--input FILE] [--csv]"
+
+    refute out =~ "--table"
+  end
 end

@@ -5,18 +5,22 @@ defmodule Refract.CLI.Answer do
 
   the table is what --csv writes, shown is what is displayed on screen, and found is used for
   return codes (exit 1 or 0). shown can hold several tables, a table with no rows is not displayed,
-  and footer is a line displayed after them.
+  and footer is a line displayed after them. writes are files Output writes, each through its
+  extension's writer with --output-opts, before the answer is shown.
   """
 
   @enforce_keys [:table]
 
-  defstruct [:title, :table, :shown, :footer, found: false]
+  defstruct [:title, :table, :shown, :footer, found: false, writes: []]
+
+  @type write :: {Path.t(), header :: [String.t()], [Refract.row()]}
 
   @type t :: %__MODULE__{
           title: String.t() | nil,
           table: Refract.Table.t(),
           shown: Refract.Table.t() | [Refract.Table.t()] | nil,
           footer: String.t() | nil,
-          found: boolean()
+          found: boolean(),
+          writes: [write()]
         }
 end

@@ -69,7 +69,9 @@ defmodule Refract.CLI.Help do
 
   defp common_flags(command) do
     @options
-    |> Keyword.take(flag_names(command.kind(), command.input()))
+    |> Keyword.take(
+      flag_names(command.kind(), command.input()) -- Keyword.keys(command.options())
+    )
     |> Enum.map(fn {name, {flag, text}} ->
       {flag, text, false, name in [:input_opts, :output_opts]}
     end)

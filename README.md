@@ -7,6 +7,7 @@ the `refract` command: quick answers and data jobs on csv files, built on
 refract columns --input customers.csv
 refract stats --input customers.csv
 refract where --match "Status=open" --input accounts.csv | refract select --col Customer
+refract split --by Status --input accounts.csv --output out/accounts.csv
 ```
 
 `where` reads numbers as refract does (`1,250.00`, `$100`); `query` reads csv as text.

@@ -6,6 +6,7 @@ defmodule Refract.CLI.Commands.Distinct do
   alias Refract.CLI.Answer
   alias Refract.CLI.Ctx
   alias Refract.CLI.Input
+  alias Refract.CLI.Layout
   alias Refract.CLI.Option
 
   @impl Refract.CLI.Command
@@ -69,11 +70,10 @@ defmodule Refract.CLI.Commands.Distinct do
 
   defp shown_table({column, counts}) do
     rows =
-      Enum.map(counts, fn {value, count} -> %{column => shown_value(value), "count" => count} end)
+      Enum.map(counts, fn {value, count} ->
+        %{column => Layout.shown_value(value), "count" => count}
+      end)
 
     Refract.Table.new(nil, [column, "count"], %{}, rows)
   end
-
-  defp shown_value(value) when value in ["", nil], do: "(blank)"
-  defp shown_value(value), do: value
 end

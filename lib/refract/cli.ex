@@ -46,9 +46,9 @@ defmodule Refract.CLI do
     |> print_result(Keyword.fetch!(opts, :out), Keyword.fetch!(opts, :err))
   end
 
-  @spec common() :: switches()
+  @spec common(module()) :: switches()
 
-  def common, do: @common
+  def common(command), do: Keyword.drop(@common, Keyword.keys(command.options()))
 
   defp run_command([], _opts), do: {:help, :stderr}
   defp run_command(["--help" | _args], _opts), do: {:help, :stdout}
@@ -58,7 +58,7 @@ defmodule Refract.CLI do
 
   defp parse_options({:ok, command, args}, _name, opts) do
     args
-    |> OptionParser.parse(strict: @common ++ own_switches(command))
+    |> OptionParser.parse(strict: common(command) ++ own_switches(command))
     |> check_options(command, opts)
   end
 
